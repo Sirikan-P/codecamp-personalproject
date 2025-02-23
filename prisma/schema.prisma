@@ -1,0 +1,163 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountStatus {
+  VERIFIED
+  SUSPENDED
+}
+
+enum Category {
+  HOMEUSE
+  OFFICE
+  GARDEN
+  KIDS
+}
+
+enum Quality {
+  A
+  B
+  C
+}
+
+enum ProductStatus {
+  READY
+  OUTOFSTOCK
+}
+
+enum OrderStatus {
+  INPROCESS
+  SHIPPING
+  COMPLETE
+}
+
+enum PaymentStatus {
+  INPROCESS
+  COMPLETE
+}
+
+model Admin {
+  id       Int       @id @default(autoincrement())
+  username String    @unique
+  password String
+  email    String?
+  User     User[]
+  Product  Product[]
+}
+
+model User {
+  id             Int           @id @default(autoincrement())
+  email          String        @unique
+  password       String
+  firstname      String?       @map("first_name")
+  lastname       String?       @map("last_name")
+  idcardNumber   String?       @map("idcard_number")
+  profileImage   String?       @map("profile_image")
+  phoneNumber    String?       @map("phone_number")
+  shopName       String?       @map("shop_name")
+  address        String?
+  accountStatus  AccountStatus @default(VERIFIED)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  approveBy      Int
+  approveByAdmin Admin         @relation(fields: [approveBy], references: [id], onDelete: Cascade)
+  Product        Product[]
+  ProductCart    ProductCart[]
+  Order          Order[]
+}
+
+model Product {
+  id             Int            @id @default(autoincrement())
+  productName    String         @map("product_name")
+  description    String?
+  price          Decimal
+  deliveryFee    Decimal        @map("delivery_fee")
+  category       Category       @default(HOMEUSE)
+  type           String
+  room           String
+  quality        Quality        @default(A)
+  style          String?
+  Brand          String?
+  qty            Int
+  orderqty       Int
+  years          String?
+  reason         String?
+  pickupAddress  String         @map("pickup_address")
+  lat            Decimal?
+  long           Decimal?
+  productStatus  ProductStatus  @default(READY) @map("product_status")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  sellerId       Int            @map("seller_id")
+  seller         User           @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  approveBy      Int            @map("approve_by")
+  approveByAdmin Admin          @relation(fields: [approveBy], references: [id], onDelete: Cascade)
+  ProductImage   ProductImage[]
+  ProductCart    ProductCart[]
+  OrderProduct   OrderProduct[]
+  Review         Review[]
+}
+
+model ProductImage {
+  id        Int     @id @default(autoincrement())
+  imageUrl  String
+  productId Int     @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id        Int     @id @default(autoincrement())
+  title     String
+  content   String?
+  score     Int
+  imageUrl  String?
+  productId Int     @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductCart {
+  id        Int      @id @default(autoincrement())
+  qty       Int
+  buyerId   Int
+  user      User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id            Int            @id @default(autoincrement())
+  paymentStatus PaymentStatus  @default(INPROCESS)
+  orderStatus   OrderStatus    @default(INPROCESS)
+  totalPrice    Decimal
+  buyerId       Int
+  user          User           @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  OrderProduct  OrderProduct[]
+}
+
+model OrderProduct {
+  id         Int     @id @default(autoincrement())
+  qty        Int
+  discount   Decimal
+  totalPrice Decimal
+  orderId    Int
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  Int
+  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
