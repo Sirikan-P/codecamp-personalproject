@@ -40,6 +40,7 @@ enum OrderStatus {
   INPROCESS
   SHIPPING
   COMPLETE
+  CANCEL
 }
 
 enum PaymentStatus {

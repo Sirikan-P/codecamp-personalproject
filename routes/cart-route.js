@@ -19,7 +19,7 @@ const { authorize } = require("../middlewares/authenticate")
 router.post('/cart', authorize ,cartController.add )  
 router.get('/cart', authorize ,cartController.show )  
 router.post('/cart/remove', authorize ,cartController.remove )  
-router.delete('/cart', authorize ,cartController.clear )  
+router.delete('/cart/clear', authorize ,cartController.clear )  
 
 //export
 module.exports = router
