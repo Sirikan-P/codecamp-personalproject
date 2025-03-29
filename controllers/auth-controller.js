@@ -97,22 +97,21 @@ exports.login = async (req,res,next)=>{
         // --create object without password
         const payload = {
             id:profile.id,
-            email:profile.email,
-            firstname:profile.firstname,
-            lastname:profile.lastname,
-            shopName:profile.shopName
+            email:profile.email
         }
         // --create token
         const token = jwt.sign(payload,process.env.SECRET, {
-            expiresIn: "1d"
+            expiresIn: "10d"
         })
         
+        const { password : pw  , createdAt , updatedAt , ...userData } = profile
         
         // step 4 :: response to front
         res.json({
             message:"Login success",
             payload:payload,
-            token: token })
+            token: token ,
+            user: userData})
     } catch (err) {
         next(err)
     }
@@ -130,8 +129,8 @@ exports.currentUser = async (req,res,next)=>{
             },
             select: {
                 id: true,
-                email: true,
-                role: true,                
+                email: true
+                        
             }
         })
 

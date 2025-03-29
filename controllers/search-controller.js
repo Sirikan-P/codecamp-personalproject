@@ -8,34 +8,36 @@ const createError = require("../utils/createError")
 exports.searchProduct = async (req, res) => {
     const { category, keyword, minPrice, maxPrice, sortBy, sortOrder, page, limit } = req.query;
     try { 
+
+
         // ค่าเริ่มต้นของ Pagination
     const pageNumber = parseInt(page) || 1; // หน้าเริ่มต้น = 1
     const pageSize = parseInt(limit) || 10; // จำนวนสินค้าต่อหน้า = 10
     const skip = (pageNumber - 1) * pageSize; // คำนวณจำนวนรายการที่ต้องข้าม
 
 
-
     // ค่าเริ่มต้นของการเรียงลำดับ (Default: เรียงตามวันที่สร้างใหม่สุด)
     const sortField = sortBy || "createdAt"; // สามารถเลือก sortBy = price, productName ได้
     const sortDirection = sortOrder === "asc" ? "asc" : "desc"; // เรียงจากน้อยไปมาก หรือมากไปน้อย
-
+    
     // ค้นหาสินค้าตามเงื่อนไขที่กำหนด
     const products = await prisma.product.findMany({
       where: {
         AND: [
-          category ? { category: category } : {}, // กรองตามหมวดหมู่
-        //   keyword
-        //     ? {
-        //         OR: [
-        //             { productName: { contains: keyword.toLowerCase() } }, // ค้นหาชื่อสินค้า
-        //             { description: { contains: keyword.toLowerCase() } }, // ค้นหาในคำอธิบาย
-        //             { Brand: { contains: keyword.toLowerCase() } }, // ค้นหาตามยี่ห้อ
-        //             { style: { contains: keyword.toLowerCase() } }, // ค้นหาตามสไตล์
-        //           ],
-        //       }
-        //     : {},
-        //   minPrice ? { price: { gte: parseFloat(minPrice) } } : {}, // ราคาขั้นต่ำ
-        //   maxPrice ? { price: { lte: parseFloat(maxPrice) } } : {}, // ราคาสูงสุด
+          (category !="*")&&(category) ? { category : category.toUpperCase() } : {}, // กรองตามหมวดหมู่
+          keyword
+            ? {
+                OR: [
+                    { productName: { contains: keyword.toLowerCase() } }, // ค้นหาชื่อสินค้า
+                    { description: { contains: keyword.toLowerCase() } }, // ค้นหาในคำอธิบาย
+                    { Brand: { contains: keyword.toLowerCase() } }, // ค้นหาตามยี่ห้อ
+                    { style: { contains: keyword.toLowerCase() } }, // ค้นหาตามสไตล์
+                  ],
+              }
+            : {},
+          minPrice ? { price: { gte: parseFloat(minPrice) } } : {}, // ราคาขั้นต่ำ
+          maxPrice ? { price: { lte: parseFloat(maxPrice) } } : {}, // ราคาสูงสุด
+          { qty: { gt: prisma.product.fields.orderqty } } 
         ],
       },
       include: {
@@ -52,7 +54,7 @@ exports.searchProduct = async (req, res) => {
     const totalProducts = await prisma.product.count({
       where: {
         AND: [
-          category ? { category: category } : {},
+          (category !="*")&&(category) ? { category: category.toUpperCase() } : {},
           keyword
             ? {
                 OR: [
@@ -68,9 +70,7 @@ exports.searchProduct = async (req, res) => {
         ],
       },
     });
-
-
-
+    
     res.json({
       success: true,
       totalProducts,
@@ -86,44 +86,7 @@ exports.searchProduct = async (req, res) => {
     }
 
 
-exports.searchProductX = async (req, res, next) => {
-    const productId = Number(req.params.id)
-    const { category, 
-            room ,
-            style, 
-            keyword, 
-            minPrice, 
-            maxPrice } = req.query
-    try {
 
-          const products = await prisma.product.findMany({
-            where: {
-              AND: [
-                category ? { category: category } : {}, // กรองตามหมวดหมู่ (ถ้ามี)
-                keyword
-                  ? {
-                      OR: [
-                        { productName: { contains: keyword, mode: "insensitive" } }, // ค้นหาชื่อสินค้า
-                        { description: { contains: keyword, mode: "insensitive" } }, // ค้นหาในคำอธิบาย
-                        { Brand: { contains: keyword, mode: "insensitive" } }, // ค้นหาตามยี่ห้อ
-                        { style: { contains: keyword, mode: "insensitive" } }, // ค้นหาตามสไตล์
-                      ],
-                    }
-                  : {},
-                minPrice ? { price: { gte: parseFloat(minPrice) } } : {}, // ราคาขั้นต่ำ (ถ้ามี)
-                maxPrice ? { price: { lte: parseFloat(maxPrice) } } : {}, // ราคาสูงสุด (ถ้ามี)
-              ],
-            },
-            include: {
-              ProductImage: true, // ดึงข้อมูลรูปภาพของสินค้า
-            },
-          });
-      
-          res.json({ success: true, products });
-    } catch (error) {
-      next(error)
-    }
-  }
 
   exports.searchProductDetail = async (req, res, next) => {
     const productId = Number(req.params.id)
@@ -133,6 +96,7 @@ exports.searchProductX = async (req, res, next) => {
             where: { id: Number(productId) },
             include: {
               ProductImage: true, // ดึงข้อมูลรูปภาพทั้งหมดของสินค้า
+              seller: true,
             },
           });
       

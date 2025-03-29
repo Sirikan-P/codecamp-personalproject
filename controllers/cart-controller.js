@@ -47,7 +47,7 @@ exports.add = async (req, res, next) => {
                     qty:Number(qty) }
         });
   
-      res.json({ message: "Product added to cart successfully", cartItem: newCartItem });
+      res.json({ message: "Product added to cart successfully", products: newCartItem });
         
     } catch (error) {
         next(error)
@@ -55,9 +55,28 @@ exports.add = async (req, res, next) => {
 }
 
 exports.show = async (req, res, next) => {
-    const { data} = req.body;
     try {
-        res.json({ msg : "show data" });
+      const buyerId = Number(req.user.id);
+
+      const cartItems = await prisma.productCart.findMany({
+        where: { buyerId: buyerId },
+        include: {
+            product: {
+                include: {
+                    ProductImage: true // รวมข้อมูล ProductImage
+                }
+            }
+        }
+    });
+
+
+      // Calculate total price
+      const totalPrice = cartItems.reduce((acc, item) => {
+          //console.log ("a",item.qty)
+          return acc + (Number(item.qty?? 0) * Number(item.product.price ?? 1));           
+      }, 0);
+
+        res.json({  message: "show product cart", cartItems : cartItems , subTotalPrice : totalPrice });
     } catch (error) {
         next(error)
     }
@@ -81,20 +100,44 @@ exports.remove = async (req, res, next) => {
         return createError(400,"Product not found in cart" )        
       }
 
+      console.log(1)
+      let textMessage =""
       if (existingCartItem.qty > qty) {
         // ลดจำนวนสินค้า
         const updatedCartItem = await prisma.productCart.update({
           where: { id: existingCartItem.id },
           data: { qty: existingCartItem.qty - qty }
         });
-        return res.json({ message: "Updated cart quantity", cartItem: updatedCartItem });
+        textMessage = "Updated cart quantity"
+        //return res.json({ message: "Updated cart quantity", cartItem: updatedCartItem , subTotalPrice : totalPrice});
       } else {
         // ถ้าจำนวนที่จะลบเท่ากับที่มี → ลบออกจากตะกร้าเลย
         await prisma.productCart.delete({
           where: { id: existingCartItem.id }
         });
-        return res.json({ message: "Product removed from cart" });
+
+        textMessage = "Product removed from cart"
+        //return res.json({ message: "Product removed from cart" , subTotalPrice : totalPrice });
       }
+
+            //---------------------------------------------
+            const cartItems = await prisma.productCart.findMany({
+              where: { buyerId: buyerId },
+              include: {
+                  product: {
+                      include: {
+                          ProductImage: true // รวมข้อมูล ProductImage
+                      }
+                  }
+              }
+          });
+          // Calculate total price
+            const totalPrice = cartItems.reduce((acc, item) => {
+              //console.log ("a",item.qty)
+              return acc + (Number(item.qty?? 0) * Number(item.product.price ?? 1));           
+            }, 0);
+          //---------------------------------------------
+          return res.json({ message: textMessage , cartItems: cartItems , subTotalPrice : totalPrice });
         
     } catch (error) {
         next(error)

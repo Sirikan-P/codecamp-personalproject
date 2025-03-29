@@ -19,10 +19,13 @@ const { authorize } = require("../middlewares/authenticate")
 //@ENDPOINT http://localhost:8001/api/order/checkout
 
 router.post('/order/checkout', authorize ,orderController.add )  
-router.get('/order/buyer/', authorize ,orderController.show )  
+router.get('/order/buyer/list', authorize ,orderController.show )  
 router.get('/order/buyer/detail/:orderId', authorize ,orderController.showDetail )  
+router.get('/order/buyer/detail/', authorize ,orderController.showDetailfromCart )  
+
 router.get('/order/seller/', authorize ,orderController.sellerView )  
 router.patch('/order/:orderId', authorize ,orderController.update )  
+
 
 
 

@@ -21,6 +21,8 @@ exports.productSchema = z.object({
     productName : z.string().min(3,"productname more than 3 characters"),
     price : z.number().int("price must be number"),
     deliveryFee : z.number().int("delivery fee must be number"),
+    qty : z.number().int("price must be number"),
+    orderqty : z.number().int("price must be number"),
     
 })
 

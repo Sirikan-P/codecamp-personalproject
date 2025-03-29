@@ -32,6 +32,8 @@ app.use('/api' , userRouter)
 app.use('/api' , productRouter)
 app.use('/api' , searchRouter)
 app.use('/api' , cartRouter )
+app.use('/api' , orderRouter )
+app.use('/api' , paymentRouter )
 
 
 
