@@ -25,13 +25,14 @@ exports.searchProduct = async (req, res) => {
       where: {
         AND: [
           (category !="*")&&(category) ? { category : category.toUpperCase() } : {}, // กรองตามหมวดหมู่
-          keyword
+          (keyword && keyword !== "*") 
             ? {
                 OR: [
                     { productName: { contains: keyword.toLowerCase() } }, // ค้นหาชื่อสินค้า
                     { description: { contains: keyword.toLowerCase() } }, // ค้นหาในคำอธิบาย
                     { Brand: { contains: keyword.toLowerCase() } }, // ค้นหาตามยี่ห้อ
                     { style: { contains: keyword.toLowerCase() } }, // ค้นหาตามสไตล์
+                    { room: { contains: keyword.toLowerCase() } }, // ค้นหาตามสไตล์
                   ],
               }
             : {},

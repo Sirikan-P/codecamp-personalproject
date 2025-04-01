@@ -1,23 +1,19 @@
 const prisma = require("../configs/prisma")
 const createError = require('../utils/createError');
 
-const stripe = require('stripe')('sk_test_51QzCc807JCuZBtxv0GZGm9E6YV4N1MYH6zvutZTpcAvmO5N0po0Y1mYooP3qKkBtn9AZi4octHqcepQMzySKbDIk00BeEjNVBa')
+const stripe = require('stripe')(process.env.STRIPE_KEY)
 
 exports.checkOut = async (req, res, next) => {
   try {
     const { id } = req.body;
-    //console.log("payment order", id)
+    //--your project data 
     const order = await prisma.order.findFirst({
       where: { id: parseInt(id) },
       include: {
-        OrderProduct: {
-          include: {
-            product: true
-          }
-        }
+        OrderProduct: { include: {product: true } }
       }
     });
-
+    //--------------------
     //stripe --
     const session = await stripe.checkout.sessions.create({
       ui_mode: 'embedded',
